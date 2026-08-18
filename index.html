@@ -996,15 +996,17 @@ el("btn-play").addEventListener("click", async () => {
     await sleep(state.countdownSec * 1000);
   }
 
-  // 「ぽん」の瞬間：カウントダウンを消し、アプリの手と生徒の手を同時に確定表示する
+  // 「ぽん」の瞬間：カウントダウンを消し、アプリの手を確定表示する（見た目はすぐ）
   cdOverlay.classList.remove("show");
   cpuHandEl.classList.remove("shake");
 
-  // 生徒の手をその場で判定する（後出し防止のため待たない）
-  const playerGesture = state.gestureStableFrames >= 1 ? state.currentGesture : null;
   const cpuGesture = ["gu", "choki", "pa"][Math.floor(Math.random() * 3)];
   cpuHandEl.textContent = HAND_EMOJI[cpuGesture];
   sfxPon();
+
+  // 生徒が手を出し切るまで少しだけ待ってから判定する（0.4秒）
+  await sleep(400);
+  const playerGesture = state.gestureStableFrames >= 1 ? state.currentGesture : null;
 
   if (!playerGesture) {
     banner.className = "result-banner";
