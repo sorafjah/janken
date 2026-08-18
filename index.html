@@ -45,8 +45,6 @@
     min-height: 100vh;
     min-height: 100dvh;
   }
-  ruby rt{ font-size: 0.5em; color: var(--sub); }
-
   .screen{
     flex: 1;
     display: none;
@@ -92,10 +90,9 @@
   }
   .icon-btn{
     width: 52px; height: 52px;
-    border-radius: 50%;
-    background: var(--panel);
-    border: 3px solid var(--line);
-    font-size: 24px;
+    background: transparent;
+    border: none;
+    font-size: 26px;
     display: flex; align-items: center; justify-content: center;
   }
 
@@ -465,34 +462,34 @@
 <section class="screen active" id="screen-start">
   <div class="title-wrap">
     <div class="title-emoji">✊✌️✋</div>
-    <p class="title-text"><ruby>手<rt>て</rt></ruby>で<ruby>勝負<rt>しょうぶ</rt></ruby>！じゃんけんアプリ</p>
+    <p class="title-text">手で勝負！じゃんけんアプリ</p>
   </div>
   <div class="lead-card">
-    <p>カメラの<ruby>前<rt>まえ</rt></ruby>に<ruby>立<rt>た</rt></ruby>って、<br>ぐー・ちょき・ぱーの<ruby>手<rt>て</rt></ruby>を<ruby>出<rt>だ</rt></ruby>してね。</p>
-    <div class="cam-badge">📷 <span>はじめる<ruby>前<rt>まえ</rt></ruby>にカメラの<ruby>許可<rt>きょか</rt></ruby>をおしてね</span></div>
+    <p>カメラの前に立って、<br>ぐー・ちょき・ぱーの手を出してね。</p>
+    <div class="cam-badge">📷 <span>はじめる前にカメラの許可をおしてね</span></div>
     <button class="btn-main" id="btn-start">はじめる</button>
     <div id="start-status"></div>
   </div>
-  <p class="footer-note">このアプリはiPadのカメラを<ruby>使<rt>つか</rt></ruby>います。カメラの<ruby>映像<rt>えいぞう</rt></ruby>は<ruby>保存<rt>ほぞん</rt></ruby>・<ruby>送信<rt>そうしん</rt></ruby>されません。</p>
+  <p class="footer-note">このアプリはiPadのカメラを使います。カメラの映像は保存・送信されません。</p>
 </section>
 
 <!-- ================= 対戦画面 ================= -->
 <section class="screen" id="screen-battle">
   <div class="score-bar">
-    <div class="score-chip win"><div class="num" id="score-win">0</div><div class="lbl"><ruby>勝<rt>か</rt></ruby>ち</div></div>
-    <div class="score-chip lose"><div class="num" id="score-lose">0</div><div class="lbl"><ruby>負<rt>ま</rt></ruby>け</div></div>
+    <div class="score-chip win"><div class="num" id="score-win">0</div><div class="lbl">勝ち</div></div>
+    <div class="score-chip lose"><div class="num" id="score-lose">0</div><div class="lbl">負け</div></div>
     <div class="score-chip draw"><div class="num" id="score-draw">0</div><div class="lbl">あいこ</div></div>
   </div>
 
   <div class="battle-stage">
     <div class="stage-card">
-      <h3>アプリの<ruby>手<rt>て</rt></ruby></h3>
+      <h3>アプリの手</h3>
       <div class="cpu-hand-area">
         <div class="hand-emoji" id="cpu-hand">✊</div>
       </div>
     </div>
     <div class="stage-card">
-      <h3>あなたの<ruby>手<rt>て</rt></ruby></h3>
+      <h3>あなたの手</h3>
       <div class="cam-wrap">
         <video id="video" autoplay playsinline muted></video>
         <canvas id="overlay"></canvas>
@@ -501,24 +498,24 @@
     </div>
   </div>
 
-  <div class="result-banner" id="result-banner">カメラの<ruby>前<rt>まえ</rt></ruby>で<ruby>手<rt>て</rt></ruby>を<ruby>出<rt>だ</rt></ruby>してね</div>
+  <div class="result-banner" id="result-banner">カメラの前で手を出してね</div>
 
   <div class="battle-controls">
-    <button class="btn-main" id="btn-play">せーの、で<ruby>勝負<rt>しょうぶ</rt></ruby>！</button>
-    <button class="btn-sub" id="btn-finish"><ruby>終<rt>お</rt></ruby>わる</button>
+    <button class="btn-main" id="btn-play">せーの、で勝負！</button>
+    <button class="btn-sub" id="btn-finish">終わる</button>
   </div>
 </section>
 
 <!-- ================= 結果画面 ================= -->
 <section class="screen" id="screen-result">
-  <h2><ruby>結果<rt>けっか</rt></ruby>だよ！</h2>
+  <h2>結果だよ！</h2>
   <div class="result-grid">
-    <div class="result-card win"><div class="num" id="final-win">0</div><div class="lbl"><ruby>勝<rt>か</rt></ruby>ち</div></div>
-    <div class="result-card lose"><div class="num" id="final-lose">0</div><div class="lbl"><ruby>負<rt>ま</rt></ruby>け</div></div>
+    <div class="result-card win"><div class="num" id="final-win">0</div><div class="lbl">勝ち</div></div>
+    <div class="result-card lose"><div class="num" id="final-lose">0</div><div class="lbl">負け</div></div>
     <div class="result-card draw"><div class="num" id="final-draw">0</div><div class="lbl">あいこ</div></div>
   </div>
   <p class="result-msg" id="result-msg"></p>
-  <button class="btn-main" id="btn-again">もう<ruby>一回<rt>いっかい</rt></ruby></button>
+  <button class="btn-main" id="btn-again">もう一回</button>
 </section>
 
 <!-- カウントダウン演出 -->
@@ -529,11 +526,11 @@
 <!-- ================= 設定パネル ================= -->
 <div id="settings-overlay">
   <div class="settings-panel">
-    <h2>⚙️ <ruby>先生<rt>せんせい</rt></ruby>の<ruby>設定<rt>せってい</rt></ruby></h2>
+    <h2>⚙️ 先生の設定</h2>
 
     <div class="set-row">
       <div class="set-row-head"><label>はんていのゆるさ</label></div>
-      <p class="set-desc"><ruby>手<rt>て</rt></ruby>の<ruby>形<rt>かたち</rt></ruby>がきれいに<ruby>出<rt>だ</rt></ruby>せなくても<ruby>認識<rt>にんしき</rt></ruby>しやすくするよ。<ruby>生徒<rt>せいと</rt></ruby>さんに<ruby>合<rt>あ</rt></ruby>わせてえらんでね。</p>
+      <p class="set-desc">手の形がきれいに出せなくても認識しやすくするよ。生徒さんに合わせてえらんでね。</p>
       <div class="seg" id="seg-difficulty">
         <button data-val="strict">きびしめ</button>
         <button data-val="normal" class="active">ふつう</button>
@@ -542,8 +539,8 @@
     </div>
 
     <div class="set-row">
-      <div class="set-row-head"><label>カウントダウンの<ruby>速<rt>はや</rt></ruby>さ（<ruby>秒<rt>びょう</rt></ruby>）</label></div>
-      <p class="set-desc">「さいしょは・ぐー・じゃんけん・ぽん」の1つずつの<ruby>間隔<rt>かんかく</rt></ruby>だよ。</p>
+      <div class="set-row-head"><label>カウントダウンの速さ（秒）</label></div>
+      <p class="set-desc">「さいしょは・ぐー・じゃんけん・ぽん」の1つずつの間隔だよ。</p>
       <div class="stepper">
         <button id="cd-minus">−</button>
         <input type="number" id="cd-value" value="1.0" step="0.1" min="0.5" max="3.0" readonly>
@@ -553,7 +550,7 @@
 
     <div class="set-row">
       <div class="toggle-row">
-        <label for="sfx-toggle"><ruby>効果音<rt>こうかおん</rt></ruby></label>
+        <label for="sfx-toggle">効果音</label>
         <label class="switch">
           <input type="checkbox" id="sfx-toggle" checked>
           <span class="slider-toggle"></span>
@@ -563,7 +560,7 @@
 
     <div class="set-row">
       <div class="toggle-row">
-        <label for="guide-toggle">カメラに<ruby>枠<rt>わく</rt></ruby>を<ruby>表示<rt>ひょうじ</rt></ruby></label>
+        <label for="guide-toggle">カメラに枠を表示</label>
         <label class="switch">
           <input type="checkbox" id="guide-toggle" checked>
           <span class="slider-toggle"></span>
@@ -957,7 +954,7 @@ function resetRoundUI(){
   el("cpu-hand").classList.remove("shake");
   const banner = el("result-banner");
   banner.className = "result-banner";
-  banner.innerHTML = "カメラの<ruby>前<rt>まえ</rt></ruby>で<ruby>手<rt>て</rt></ruby>を<ruby>出<rt>だ</rt></ruby>してね";
+  banner.textContent = "カメラの前で手を出してね";
   el("btn-play").disabled = false;
   state.roundActive = false;
 }
@@ -1000,22 +997,12 @@ el("btn-play").addEventListener("click", async () => {
   cdOverlay.classList.remove("show");
   cpuHandEl.classList.remove("shake");
 
-  // 「ぽん」の瞬間の生徒の手を判定
-  let playerGesture = state.gestureStableFrames >= 2 ? state.currentGesture : null;
-
-  // もう少しだけ待って再確認（ぶれ対策：判定できなければ最大0.6秒リトライ）
-  let retryCount = 0;
-  while (!playerGesture && retryCount < 6) {
-    await sleep(100);
-    if (state.gestureStableFrames >= 2 && state.currentGesture) {
-      playerGesture = state.currentGesture;
-    }
-    retryCount++;
-  }
+  // 「ぽん」の瞬間の生徒の手をその場で判定する（後出し防止のため待たない）
+  const playerGesture = state.gestureStableFrames >= 1 ? state.currentGesture : null;
 
   if (!playerGesture) {
     banner.className = "result-banner";
-    banner.innerHTML = "手が見えなかったよ。もう<ruby>一度<rt>いちど</rt></ruby><ruby>手<rt>て</rt></ruby>を<ruby>出<rt>だ</rt></ruby>してね！";
+    banner.textContent = "手が見えなかったよ。もう一度手を出してね！";
     el("btn-play").disabled = false;
     state.roundActive = false;
     return;
@@ -1031,15 +1018,15 @@ el("btn-play").addEventListener("click", async () => {
 
   if (result === "win") {
     banner.className = "result-banner win";
-    banner.innerHTML = `あなたの${HAND_NAME[playerGesture]} の<ruby>勝<rt>か</rt></ruby>ち！やったね！`;
+    banner.textContent = `あなたの${HAND_NAME[playerGesture]}の勝ち！やったね！`;
     sfxWin();
   } else if (result === "lose") {
     banner.className = "result-banner lose";
-    banner.innerHTML = `アプリの${HAND_NAME[cpuGesture]} の<ruby>勝<rt>か</rt></ruby>ち。また<ruby>挑戦<rt>ちょうせん</rt></ruby>してね！`;
+    banner.textContent = `アプリの${HAND_NAME[cpuGesture]}の勝ち。また挑戦してね！`;
     sfxLose();
   } else {
     banner.className = "result-banner draw";
-    banner.innerHTML = `あいこ！もう<ruby>一回<rt>いっかい</rt></ruby>やってみよう`;
+    banner.textContent = `あいこ！もう一回やってみよう`;
     sfxDraw();
   }
 
