@@ -983,22 +983,28 @@ el("btn-play").addEventListener("click", async () => {
 
   const cdOverlay = el("countdown-overlay");
   const cdText = el("countdown-text");
-  const steps = ["さいしょは", "ぐー", "じゃんけん", "ぽん！"];
+  const steps = ["さいしょは", "ぐー", "じゃんけん"];
 
   cdOverlay.classList.add("show");
   const cpuHandEl = el("cpu-hand");
   cpuHandEl.classList.add("shake");
+  cpuHandEl.textContent = "✊";
 
   for (let i = 0; i < steps.length; i++) {
     cdText.textContent = steps[i];
     sfxCountBeep();
     await sleep(state.countdownSec * 1000);
   }
+
+  // 「ぽん」の瞬間：カウントダウンを消し、アプリの手と生徒の手を同時に確定表示する
   cdOverlay.classList.remove("show");
   cpuHandEl.classList.remove("shake");
 
-  // 「ぽん」の瞬間の生徒の手をその場で判定する（後出し防止のため待たない）
+  // 生徒の手をその場で判定する（後出し防止のため待たない）
   const playerGesture = state.gestureStableFrames >= 1 ? state.currentGesture : null;
+  const cpuGesture = ["gu", "choki", "pa"][Math.floor(Math.random() * 3)];
+  cpuHandEl.textContent = HAND_EMOJI[cpuGesture];
+  sfxPon();
 
   if (!playerGesture) {
     banner.className = "result-banner";
@@ -1007,10 +1013,6 @@ el("btn-play").addEventListener("click", async () => {
     state.roundActive = false;
     return;
   }
-
-  const cpuGesture = ["gu", "choki", "pa"][Math.floor(Math.random() * 3)];
-  cpuHandEl.textContent = HAND_EMOJI[cpuGesture];
-  sfxPon();
 
   const result = judge(playerGesture, cpuGesture);
   state.scores[result]++;
@@ -1043,13 +1045,13 @@ el("btn-finish").addEventListener("click", () => {
   el("final-draw").textContent = state.scores.draw;
 
   const total = state.scores.win + state.scores.lose + state.scores.draw;
-  let msg = "たくさん<ruby>遊<rt>あそ</rt></ruby>んでくれてありがとう！";
+  let msg = "たくさん遊んでくれてありがとう！";
   if (total > 0 && state.scores.win >= state.scores.lose && state.scores.win > 0) {
-    msg = "たくさん<ruby>勝<rt>か</rt></ruby>てたね！すごいよ！";
+    msg = "たくさん勝てたね！すごいよ！";
   } else if (total === 0) {
-    msg = "また<ruby>今度<rt>こんど</rt></ruby><ruby>遊<rt>あそ</rt></ruby>ぼうね！";
+    msg = "また今度遊ぼうね！";
   }
-  el("result-msg").innerHTML = msg;
+  el("result-msg").textContent = msg;
 
   showScreen("result");
 });
