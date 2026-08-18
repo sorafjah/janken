@@ -782,30 +782,40 @@ function dist(a, b){
   return Math.hypot(a.x - b.x, a.y - b.y, (a.z||0) - (b.z||0));
 }
 
-// 手のひらサイズ（正規化用のスケール基準）: 手首〜中指付け根
+// 手のひらサイズ（正規化用のスケール基準）
+// 手首〜各指の付け根(MCP)の平均距離を使うことで、手の向き・カメラとの距離による
+// ブレに対してより安定した基準にする
 function palmScale(lm){
-  return Math.max(dist(lm[LM.WRIST], lm[LM.MIDDLE_MCP]), 0.001);
+  const mcps = [LM.INDEX_MCP, LM.MIDDLE_MCP, LM.RING_MCP, LM.PINKY_MCP];
+  const avg = mcps.reduce((sum, idx) => sum + dist(lm[LM.WRIST], lm[idx]), 0) / mcps.length;
+  return Math.max(avg, 0.001);
 }
 
-// 難易度ごとの「指が伸びている」判定しきい値（tip-mcp距離 / palmScale の倍率）
-// 値が大きいほど「伸びている」とみなされやすい＝緩い判定
+// 難易度ごとの「指が伸びている」判定しきい値
+// 指先が付け根(MCP)からどれだけ離れているか（palmScaleに対する倍率）。
+// 値が大きいほど「伸びている」と判定されにくい＝厳しい判定
 const EXTEND_RATIO = {
-  strict: 1.55,
-  normal: 1.30,
-  loose:  1.05,
+  strict: 0.78,
+  normal: 0.65,
+  loose:  0.50,
 };
 
 function isFingerExtended(lm, mcpIdx, pipIdx, tipIdx, scale, ratio){
-  // 指先が付け根から見てどれだけ遠いか
+  const wrist = lm[LM.WRIST];
   const tipToMcp = dist(lm[tipIdx], lm[mcpIdx]);
-  const pipToMcp = dist(lm[pipIdx], lm[mcpIdx]);
-  // 伸びていれば tip は pip よりずっと mcp から遠くなる
-  return (tipToMcp / scale) > ratio && tipToMcp > pipToMcp * 1.05;
+  const tipToWrist = dist(lm[tipIdx], wrist);
+  const mcpToWrist = dist(lm[mcpIdx], wrist);
+  // 指が伸びている場合の特徴を2つ組み合わせて判定する：
+  // (1) 指先が付け根から十分離れている（曲げていると tip が mcp に近づく）
+  // (2) 指先が手首から見て付け根よりも遠い（曲げていると tip が手のひら側に戻ってくる）
+  const farFromMcp = (tipToMcp / scale) > ratio;
+  const farFromWrist = tipToWrist > mcpToWrist * 1.05;
+  return farFromMcp && farFromWrist;
 }
 
 function isThumbExtended(lm, scale, ratio){
   const tipToMcp = dist(lm[LM.THUMB_TIP], lm[LM.THUMB_MCP]);
-  return (tipToMcp / scale) > ratio * 0.85;
+  return (tipToMcp / scale) > ratio * 0.75;
 }
 
 // 21点ランドマークから ぐー/ちょき/ぱー/不明 を判定
