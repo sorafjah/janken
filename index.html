@@ -32,6 +32,7 @@
   html, body{
     margin:0; padding:0; width:100%; height:100%;
     overscroll-behavior: none;
+    overflow-x: hidden;
   }
   body{
     background: var(--bg);
@@ -42,6 +43,7 @@
     user-select: none;
     display: flex;
     flex-direction: column;
+    align-items: center;
     min-height: 100vh;
     min-height: 100dvh;
   }
@@ -302,7 +304,7 @@
     grid-template-columns: 1fr 1fr;
     gap: clamp(12px, 2.4vw, 24px);
   }
-  @media (max-width: 640px){
+  @media (max-width: 820px){
     .battle-stage{ grid-template-columns: 1fr; }
   }
   .stage-card{
@@ -568,6 +570,33 @@
       </div>
     </div>
 
+    <div class="set-row">
+      <div class="toggle-row">
+        <label for="auto-next-toggle">結果の後、自動で次に進む</label>
+        <label class="switch">
+          <input type="checkbox" id="auto-next-toggle" checked>
+          <span class="slider-toggle"></span>
+        </label>
+      </div>
+      <p class="set-desc" id="auto-next-desc">結果が出てから、下の秒数で自動的に次の勝負がはじまるよ。</p>
+      <div class="stepper" id="auto-next-stepper">
+        <button id="auto-next-minus">−</button>
+        <input type="number" id="auto-next-value" value="5" step="1" min="2" max="15" readonly>
+        <button id="auto-next-plus">＋</button>
+      </div>
+    </div>
+
+    <div class="set-row">
+      <div class="toggle-row">
+        <label for="retry-toggle">手をやりなおして勝負できる</label>
+        <label class="switch">
+          <input type="checkbox" id="retry-toggle" checked>
+          <span class="slider-toggle"></span>
+        </label>
+      </div>
+      <p class="set-desc">オンにすると、結果が出た後でも手をもう一度出しなおして勝負をやりなおせるよ。</p>
+    </div>
+
     <button class="settings-close" id="btn-close-settings">とじる</button>
   </div>
 </div>
@@ -581,6 +610,9 @@ const state = {
   countdownSec: 1.0,
   sfxOn: true,
   guideOn: true,
+  autoNext: true,           // 結果が決まってから自動で次のラウンドへ進むか
+  autoNextSec: 5,           // 自動で進むまでの秒数
+  retryAllowed: true,       // 手を出し直して勝負をやり直せるか
   scores: { win: 0, lose: 0, draw: 0 },
   handLandmarker: null,
   video: null,
@@ -591,6 +623,10 @@ const state = {
   currentGesture: null,     // "gu" | "choki" | "pa" | null
   gestureStableFrames: 0,
   roundActive: false,
+  roundFinished: false,     // 結果が出た後（自動進行・やり直し待ちの状態）
+  waitingForPlayerHand: false, // アプリの手は確定済みで、生徒の手が見えるのを待っている状態
+  pendingCpuGesture: null,     // 待っている間のアプリの手
+  autoNextTimerId: null,
   animFrameId: null,
 };
 
@@ -643,6 +679,34 @@ el("cd-plus").addEventListener("click", () => {
 el("sfx-toggle").addEventListener("change", (e) => { state.sfxOn = e.target.checked; });
 // 枠表示
 el("guide-toggle").addEventListener("change", (e) => { state.guideOn = e.target.checked; });
+
+// 自動で次に進む
+const autoNextStepper = el("auto-next-stepper");
+function updateAutoNextStepperEnabled(){
+  autoNextStepper.style.opacity = state.autoNext ? "1" : "0.4";
+  autoNextStepper.querySelectorAll("button").forEach(b => b.disabled = !state.autoNext);
+}
+el("auto-next-toggle").addEventListener("change", (e) => {
+  state.autoNext = e.target.checked;
+  updateAutoNextStepperEnabled();
+});
+updateAutoNextStepperEnabled();
+
+const autoNextInput = el("auto-next-value");
+function clampAutoNextSec(v){ return Math.min(15, Math.max(2, Math.round(v))); }
+el("auto-next-minus").addEventListener("click", () => {
+  state.autoNextSec = clampAutoNextSec(state.autoNextSec - 1);
+  autoNextInput.value = state.autoNextSec;
+});
+el("auto-next-plus").addEventListener("click", () => {
+  state.autoNextSec = clampAutoNextSec(state.autoNextSec + 1);
+  autoNextInput.value = state.autoNextSec;
+});
+
+// 手をやりなおして勝負できる
+el("retry-toggle").addEventListener("change", (e) => {
+  state.retryAllowed = e.target.checked;
+});
 
 /* ===================== 効果音（WebAudio） ===================== */
 let audioCtx = null;
@@ -913,6 +977,16 @@ function startDetectionLoop(){
           state.currentGesture = gesture;
           state.gestureStableFrames = gesture ? 1 : 0;
         }
+
+        // 結果確定後、手を出しなおしたらやり直し判定する
+        if (state.roundFinished && !state.roundActive) {
+          maybeRetryRound();
+        }
+
+        // 「手が見えなかった」待ち状態で、手が見えるようになったらそこで判定する
+        if (state.waitingForPlayerHand && !state.roundActive && gesture && state.gestureStableFrames >= 2) {
+          completeWaitingRound(gesture);
+        }
       } else {
         noHandFrames++;
         state.currentGesture = null;
@@ -966,7 +1040,19 @@ function resetRoundUI(){
   banner.className = "result-banner";
   banner.textContent = "カメラの前で手を出してね";
   el("btn-play").disabled = false;
+  el("btn-play").textContent = "せーの、で勝負！";
   state.roundActive = false;
+  state.roundFinished = false;
+  state.waitingForPlayerHand = false;
+  state.pendingCpuGesture = null;
+  clearAutoNextTimer();
+}
+
+function clearAutoNextTimer(){
+  if (state.autoNextTimerId) {
+    clearInterval(state.autoNextTimerId);
+    state.autoNextTimerId = null;
+  }
 }
 
 function updateScoreUI(){
@@ -981,9 +1067,106 @@ function judge(player, cpu){
   return winMap[player] === cpu ? "win" : "lose";
 }
 
-el("btn-play").addEventListener("click", async () => {
+// ラウンド確定後の状態を保持（やり直し判定・自動進行に使う）
+let lastRoundPlayerGesture = null;
+let lastRoundCpuGesture = null;
+let lastRoundResult = null;
+
+function showResult(playerGesture, cpuGesture, result){
+  const banner = el("result-banner");
+  el("cpu-hand").textContent = HAND_EMOJI[cpuGesture];
+
+  lastRoundPlayerGesture = playerGesture;
+  lastRoundCpuGesture = cpuGesture;
+  lastRoundResult = result;
+
+  if (result === "win") {
+    banner.className = "result-banner win";
+    banner.textContent = `あなたの${HAND_NAME[playerGesture]}の勝ち！やったね！`;
+    sfxWin();
+  } else if (result === "lose") {
+    banner.className = "result-banner lose";
+    banner.textContent = `アプリの${HAND_NAME[cpuGesture]}の勝ち。また挑戦してね！`;
+    sfxLose();
+  } else {
+    banner.className = "result-banner draw";
+    banner.textContent = `あいこ！もう一回やってみよう`;
+    sfxDraw();
+  }
+
+  state.roundFinished = true;
+  el("btn-play").disabled = false;
+
+  startAutoNextIfEnabled();
+}
+
+function startAutoNextIfEnabled(){
+  clearAutoNextTimer();
+  const btn = el("btn-play");
+
+  if (!state.autoNext) {
+    btn.textContent = "もう一回、勝負！";
+    return;
+  }
+
+  let remaining = state.autoNextSec;
+  btn.textContent = `もう一回、勝負！（あと${remaining}びょう）`;
+
+  state.autoNextTimerId = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) {
+      clearAutoNextTimer();
+      if (state.roundFinished && !state.roundActive) {
+        playRound();
+      }
+      return;
+    }
+    btn.textContent = `もう一回、勝負！（あと${remaining}びょう）`;
+  }, 1000);
+}
+
+// 判定確定後、生徒が手を出し直したことを検知して勝負をやりなおす
+function maybeRetryRound(){
+  if (!state.retryAllowed) return;
+  if (!state.roundFinished || state.roundActive) return;
+  if (!state.currentGesture) return;
+  if (state.gestureStableFrames < 3) return; // 安定して形が変わったことを確認
+  if (state.currentGesture === lastRoundPlayerGesture) return; // 同じ手なら何もしない
+
+  clearAutoNextTimer();
+  const newPlayerGesture = state.currentGesture;
+  const result = judge(newPlayerGesture, lastRoundCpuGesture);
+
+  // スコアを訂正（前回分を取り消して新しい結果を加算）
+  state.scores[lastRoundResult]--;
+  state.scores[result]++;
+  updateScoreUI();
+
+  sfxPon();
+  showResult(newPlayerGesture, lastRoundCpuGesture, result);
+}
+
+// 「手が見えなかったよ」の待ち状態で、手が見えるようになった瞬間に判定を完了する
+function completeWaitingRound(playerGesture){
+  const cpuGesture = state.pendingCpuGesture;
+  state.waitingForPlayerHand = false;
+  state.pendingCpuGesture = null;
+
+  const result = judge(playerGesture, cpuGesture);
+  state.scores[result]++;
+  updateScoreUI();
+
+  sfxPon();
+  showResult(playerGesture, cpuGesture, result);
+}
+
+async function playRound(){
   if (state.roundActive) return;
   state.roundActive = true;
+  state.roundFinished = false;
+  state.waitingForPlayerHand = false;
+  state.pendingCpuGesture = null;
+  clearAutoNextTimer();
   el("btn-play").disabled = true;
   el("cam-status").classList.remove("show");
 
@@ -1020,9 +1203,13 @@ el("btn-play").addEventListener("click", async () => {
 
   if (!playerGesture) {
     banner.className = "result-banner";
-    banner.textContent = "手が見えなかったよ。もう一度手を出してね！";
-    el("btn-play").disabled = false;
+    banner.textContent = "手が見えなかったよ。手を出したら判定するよ！";
+    el("btn-play").disabled = true;
+    el("btn-play").textContent = "手を出してね…";
     state.roundActive = false;
+    state.roundFinished = false;
+    state.waitingForPlayerHand = true;
+    state.pendingCpuGesture = cpuGesture;
     return;
   }
 
@@ -1030,28 +1217,19 @@ el("btn-play").addEventListener("click", async () => {
   state.scores[result]++;
   updateScoreUI();
 
-  if (result === "win") {
-    banner.className = "result-banner win";
-    banner.textContent = `あなたの${HAND_NAME[playerGesture]}の勝ち！やったね！`;
-    sfxWin();
-  } else if (result === "lose") {
-    banner.className = "result-banner lose";
-    banner.textContent = `アプリの${HAND_NAME[cpuGesture]}の勝ち。また挑戦してね！`;
-    sfxLose();
-  } else {
-    banner.className = "result-banner draw";
-    banner.textContent = `あいこ！もう一回やってみよう`;
-    sfxDraw();
-  }
-
-  el("btn-play").disabled = false;
   state.roundActive = false;
+  showResult(playerGesture, cpuGesture, result);
+}
+
+el("btn-play").addEventListener("click", () => {
+  playRound();
 });
 
 function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
 
 /* ===================== 終わる／結果画面 ===================== */
 el("btn-finish").addEventListener("click", () => {
+  clearAutoNextTimer();
   el("final-win").textContent = state.scores.win;
   el("final-lose").textContent = state.scores.lose;
   el("final-draw").textContent = state.scores.draw;
